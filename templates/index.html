@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>🎬 Videofileserver</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: var(--bg, #121212);
+            color: var(--fg, #eee);
+            padding: 20px;
+        }
+        a { color: var(--link, #80d0ff); text-decoration: none; }
+        .file { margin-bottom: 20px; }
+        video, img.preview {
+            width: 100%;
+            max-width: 600px;
+            margin-top: 5px;
+            border-radius: 8px;
+        }
+        .controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+        }
+        .upload-box {
+            margin-top: 40px;
+            padding: 10px;
+            border: 1px dashed #aaa;
+        }
+        .progress-bar {
+            width: 100%;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            height: 16px;
+            margin-top: 5px;
+        }
+        .progress {
+            background: limegreen;
+            width: 0%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button onclick="toggleTheme()">🌞/🌙</button>
+    </div>
+
+    <h1>🎬 Videofileserver</h1>
+    {% for item in items %}
+        <div class="file">
+            {% if item.is_dir %}
+                📁 <a href="{{ item.href }}/">{{ item.name }}/</a>
+                {% if item.preview %}
+                    <br><img src="{{ item.preview }}" class="preview" alt="Preview">
+                {% endif %}
+            {% elif item.is_video %}
+                ▶️ <strong>{{ item.name }}</strong><br>
+                <video controls preload="auto">
+                    <source src="{{ item.href }}" type="video/mp4">
+                    Dein Browser unterstützt kein Video.
+                </video>
+            {% else %}
+                📄 {{ item.name }}
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    <div class="upload-box">
+        <h3>Datei hochladen</h3>
+        <form id="uploadForm" method="post" enctype="multipart/form-data">
+            <input type="file" name="file"><br><br>
+            <button type="submit">Hochladen</button>
+        </form>
+        <div class="progress-bar"><div class="progress" id="progress"></div></div>
+    </div>
+
+<script>
+function toggleTheme() {
+    const root = document.documentElement.style;
+    const currentBg = getComputedStyle(document.body).backgroundColor;
+    if (currentBg === "rgb(18, 18, 18)") {
+        root.setProperty("--bg", "#fff");
+        root.setProperty("--fg", "#000");
+        root.setProperty("--link", "#0066cc");
+    } else {
+        root.setProperty("--bg", "#121212");
+        root.setProperty("--fg", "#eee");
+        root.setProperty("--link", "#80d0ff");
+    }
+}
+
+// Upload handler
+document.getElementById("uploadForm").onsubmit = function(e) {
+    e.preventDefault();
+    var formData = new FormData(this);
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", window.location.pathname);
+    xhr.upload.onprogress = function(e) {
+        if (e.lengthComputable) {
+            var percent = (e.loaded / e.total) * 100;
+            document.getElementById("progress").style.width = percent + "%";
+        }
+    };
+    xhr.onload = function() {
+        if (xhr.status == 200) location.reload();
+        else alert("Fehler beim Hochladen");
+    };
+    xhr.send(formData);
+};
+</script>
+</body>
+</html>
